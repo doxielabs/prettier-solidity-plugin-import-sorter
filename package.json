@@ -1,0 +1,26 @@
+{
+  "name": "@doxielabs/prettier-plugin-solidity-import-sorter",
+  "version": "0.1.0",
+  "description": "Prettier plugin that sorts Solidity import statements by group and path length",
+  "keywords": [
+    "prettier",
+    "prettier-plugin",
+    "solidity",
+    "imports"
+  ],
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node --test test/sort-imports.test.js"
+  },
+  "peerDependencies": {
+    "prettier": ">=2.0.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT",
+  "packageManager": "yarn@4.12.0"
+}
