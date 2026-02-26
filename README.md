@@ -10,12 +10,12 @@ Zero runtime dependencies.
 
 Imports are sorted into four groups, separated by a blank line:
 
-| # | Group | Criteria |
-|---|-------|---------|
-| 1 | **Third-party packages** | Anything that is not first-party, and not a relative path |
-| 2 | **First-party interfaces** | First-party scope **and** a path segment contains `interfaces` |
-| 3 | **First-party packages** | First-party scope, no `interfaces` segment |
-| 4 | **Relative imports** | Paths starting with `./` or `../` |
+| #   | Group                      | Criteria                                                       |
+| --- | -------------------------- | -------------------------------------------------------------- |
+| 1   | **Third-party packages**   | Anything that is not first-party, and not a relative path      |
+| 2   | **First-party interfaces** | First-party scope **and** a path segment contains `interfaces` |
+| 3   | **First-party packages**   | First-party scope, no `interfaces` segment                     |
+| 4   | **Relative imports**       | Paths starting with `./` or `../`                              |
 
 Within each group, imports are ordered by **descending path length** (longest first). Equal-length paths are sorted alphabetically.
 
@@ -27,6 +27,8 @@ Everything outside the imports block — pragma, license identifier, contract co
 
 ## Installation
 
+### Using npm
+
 ```bash
 npm install --save-dev prettier-plugin-solidity-import-sorter
 ```
@@ -35,6 +37,18 @@ Prettier must also be installed (v2 or v3):
 
 ```bash
 npm install --save-dev prettier
+```
+
+### Using yarn
+
+```bash
+yarn add --dev prettier-plugin-solidity-import-sorter
+```
+
+Prettier must also be installed (v2 or v3):
+
+```bash
+yarn add --dev prettier
 ```
 
 ---
@@ -151,9 +165,9 @@ Tests use Node's built-in test runner (`node:test`) — no additional test frame
 
 ## Options reference
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `solidityFirstPartyScope` | `string` | `"@balancer-labs"` | The npm scope (or package prefix) that identifies first-party packages. Imports under this scope are split into *first-party interfaces* (any path segment contains `interfaces`) and *first-party packages*. |
+| Option                    | Type     | Default            | Description                                                                                                                                                                                                   |
+| ------------------------- | -------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `solidityFirstPartyScope` | `string` | `"@balancer-labs"` | The npm scope (or package prefix) that identifies first-party packages. Imports under this scope are split into _first-party interfaces_ (any path segment contains `interfaces`) and _first-party packages_. |
 
 ---
 
@@ -165,5 +179,6 @@ An import is classified as **group 2 (first-party interface)** when:
 2. At least one slash-delimited segment of the path contains the word `interfaces`
 
 This matches both:
+
 - Package names like `@balancer-labs/v3-interfaces/...` (`v3-interfaces` contains `interfaces`)
 - Directory paths like `@my-org/core/interfaces/IFoo.sol` (`interfaces` is a path segment)
