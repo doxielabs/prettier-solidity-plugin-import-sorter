@@ -1,6 +1,17 @@
 "use strict";
 
 /**
+ * Import group classification enum.
+ * Groups are processed in this numeric order (1, 2, 3, 4).
+ */
+const ImportGroup = {
+  EXTERNAL_DEPENDENCIES: 1,
+  FIRST_PARTY_INTERFACES: 2,
+  FIRST_PARTY_PACKAGES: 3,
+  LOCAL_DEPENDENCIES: 4,
+};
+
+/**
  * Extracts the quoted path from an import statement (single- or multi-line).
  * Always uses the LAST quoted string in the statement — that is always the
  * module path, even when symbol names appear on earlier lines.
@@ -39,34 +50,38 @@ function isSpecificImport(importText) {
 /**
  * Classify an import path into one of four groups.
  *
- * Group 1 – Third-party: anything that is not first-party, not relative
- * Group 2 – First-party interfaces: starts with firstPartyScope AND a path
- *            segment contains "interfaces"
- * Group 3 – First-party packages: starts with firstPartyScope, no interfaces segment
- * Group 4 – Relative: starts with ./ or ../  (interfaces or not — stays here)
+ * EXTERNAL_DEPENDENCIES – Third-party: anything that is not first-party, not relative
+ * FIRST_PARTY_INTERFACES – First-party interfaces: starts with firstPartyScope AND a path
+ *                          segment contains "interfaces"
+ * FIRST_PARTY_PACKAGES – First-party packages: starts with firstPartyScope, no interfaces segment
+ * LOCAL_DEPENDENCIES – Relative: starts with ./ or ../  (interfaces or not — stays here)
  *
  * @param {string} importPath
  * @param {string} firstPartyScope  e.g. "@balancer-labs"
- * @returns {1|2|3|4}
+ * @returns {number} ImportGroup value
  */
 function classifyImport(importPath, firstPartyScope) {
   const scope = firstPartyScope.endsWith("/")
     ? firstPartyScope
     : firstPartyScope + "/";
 
-  // Relative imports always stay in group 4, regardless of filename.
+  // Relative imports always stay in LOCAL_DEPENDENCIES, regardless of filename.
   if (importPath.startsWith("./") || importPath.startsWith("../")) {
-    return 4;
+    return ImportGroup.LOCAL_DEPENDENCIES;
   }
 
   if (importPath.startsWith(scope)) {
-    // Group 2 if any slash-delimited segment contains the word "interfaces"
+    // FIRST_PARTY_INTERFACES if any slash-delimited segment contains the word "interfaces"
     // (covers package names like v3-interfaces AND directory segments /interfaces/)
-    const hasInterfacesSegment = importPath.split("/").some((s) => s.includes("interfaces"));
-    return hasInterfacesSegment ? 2 : 3;
+    const hasInterfacesSegment = importPath
+      .split("/")
+      .some((s) => s.includes("interfaces"));
+    return hasInterfacesSegment
+      ? ImportGroup.FIRST_PARTY_INTERFACES
+      : ImportGroup.FIRST_PARTY_PACKAGES;
   }
 
-  return 1;
+  return ImportGroup.EXTERNAL_DEPENDENCIES;
 }
 
 /**
@@ -210,17 +225,29 @@ function deduplicate(chunks) {
  * @returns {string}  the sorted imports block (no leading/trailing newline)
  */
 function buildImportsBlock(chunks, firstPartyScope) {
-  const groups = { 1: [], 2: [], 3: [], 4: [] };
+  const groups = {
+    [ImportGroup.EXTERNAL_DEPENDENCIES]: [],
+    [ImportGroup.FIRST_PARTY_INTERFACES]: [],
+    [ImportGroup.FIRST_PARTY_PACKAGES]: [],
+    [ImportGroup.LOCAL_DEPENDENCIES]: [],
+  };
   for (const chunk of chunks) {
     const g = classifyImport(chunk.path, firstPartyScope);
     groups[g].push(chunk);
   }
 
-  for (const g of [1, 2, 3, 4]) {
+  const groupOrder = [
+    ImportGroup.EXTERNAL_DEPENDENCIES,
+    ImportGroup.FIRST_PARTY_INTERFACES,
+    ImportGroup.FIRST_PARTY_PACKAGES,
+    ImportGroup.LOCAL_DEPENDENCIES,
+  ];
+
+  for (const g of groupOrder) {
     groups[g].sort(bySpecificThenDescendingLength);
   }
 
-  return [1, 2, 3, 4]
+  return groupOrder
     .filter((g) => groups[g].length > 0)
     .map((g) => groups[g].map((c) => c.raw).join("\n"))
     .join("\n\n");
@@ -256,4 +283,11 @@ function sortImports(source, firstPartyScope = "@balancer-labs") {
   return result;
 }
 
-module.exports = { sortImports, classifyImport, extractPath, deduplicate, isSpecificImport };
+module.exports = {
+  sortImports,
+  classifyImport,
+  extractPath,
+  deduplicate,
+  isSpecificImport,
+  ImportGroup,
+};
